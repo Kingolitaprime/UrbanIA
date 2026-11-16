@@ -1,0 +1,124 @@
+{# Bloque de resultados con pestañas. Lo llena static/js/visor.js (panel y detalle comparten este HTML). #}
+<section id="resultado" class="resultado" hidden aria-label="Resultados del análisis">
+  <div class="aviso aviso-info" role="note">
+    <strong>Recordatorio:</strong> las superficies son <em>estimaciones</em> obtenidas por clasificación de imágenes
+    satelitales; no son mediciones confirmadas en terreno.
+  </div>
+
+  <div class="tarjeta" id="bloque-resumen">
+    <h2 id="res-titulo">Resultados</h2>
+    <h3 class="sub-h">En pocas palabras</h3>
+    <p id="res-resumen" class="resumen-simple"></p>
+    <button type="button" class="btn btn-borde btn-chico" id="btn-leer-resumen" hidden aria-pressed="false">🔊 Escuchar resumen</button>
+  </div>
+
+  <div class="tarjeta">
+    <div class="pestanas" role="tablist" aria-label="Secciones del resultado">
+      <button type="button" role="tab" id="tab-antes" aria-controls="panel-antes" aria-selected="true">Antes y después</button>
+      <button type="button" role="tab" id="tab-cambios" aria-controls="panel-cambios" aria-selected="false" tabindex="-1">Cambios detectados</button>
+      <button type="button" role="tab" id="tab-stats" aria-controls="panel-stats" aria-selected="false" tabindex="-1">Estadísticas</button>
+      <button type="button" role="tab" id="tab-informe" aria-controls="panel-informe" aria-selected="false" tabindex="-1">Informe</button>
+      <button type="button" role="tab" id="tab-fuentes" aria-controls="panel-fuentes" aria-selected="false" tabindex="-1">Fuentes</button>
+    </div>
+
+    {# ---- Pestaña 1: Antes y después ---- #}
+    <div role="tabpanel" id="panel-antes" aria-labelledby="tab-antes" tabindex="0">
+      <h3 class="sub-h">Compare las dos imágenes satelitales</h3>
+      <p class="chico">El mapa se divide entre los dos años: a la izquierda del separador queda el año inicial y a la derecha el final. Mueva el control para desplazar el separador. Los botones muestran un solo año.</p>
+      <div class="botonera">
+        <button type="button" class="btn btn-borde btn-chico" id="btn-ver-ini">Ver año <span id="lbl-ini-b"></span></button>
+        <button type="button" class="btn btn-borde btn-chico" id="btn-ver-fin">Ver año <span id="lbl-fin-b"></span></button>
+      </div>
+      <div class="controles-visor">
+        <label for="cruce">Separador: año <span id="lbl-ini"></span> a la izquierda · año <span id="lbl-fin"></span> a la derecha</label>
+        <input type="range" id="cruce" min="0" max="100" value="50" aria-label="Mover el separador entre la imagen inicial y la imagen final">
+        <label class="check"><input type="checkbox" id="ver-cambio"> Superponer los cambios</label>
+      </div>
+      <p id="mezcla-anios" class="chico" aria-live="polite"></p>
+    </div>
+
+    {# ---- Pestaña 2: Cambios detectados ---- #}
+    <div role="tabpanel" id="panel-cambios" aria-labelledby="tab-cambios" tabindex="0" hidden>
+      <h3 class="sub-h">Qué cambió entre <span class="ano-ini"></span> y <span class="ano-fin"></span></h3>
+      <p class="chico">El mapa muestra la imagen del año final. Los colores señalan cambios estimados desde el año inicial. El norte está arriba: este es derecha, oeste izquierda y las diagonales quedan entre ambos.</p>
+      <ul class="leyenda" aria-label="Leyenda de colores">
+        <li><i style="background:#D55E00"></i> Nueva urbanización (aparecen construcciones o suelo urbano)</li>
+        <li><i style="background:#7A1F5C"></i> Vegetación que pasó a ser suelo urbano</li>
+        <li><i style="background:#F0E442;border:1px solid #333"></i> Vegetación que ya no se detecta</li>
+        <li><i style="background:#0072B2"></i> Vegetación que ahora se detecta</li>
+        <li><i style="background:#808080"></i> Sin dato (nubes o sombras)</li>
+      </ul>
+      <p class="chico">Una hectárea equivale a 10.000 m², aproximadamente 1,4 canchas de fútbol. Las distancias se miden desde el centro de la ciudad. Los contornos de las zonas son aproximados.</p>
+      <div id="cambios-contenido">
+        <p id="cambios-conteo" class="resumen-simple"></p>
+        <div class="filtro-zonas">
+          <label for="filtro-zonas">Mostrar</label>
+          <select id="filtro-zonas">
+            <option value="">Todos los tipos de cambio</option>
+            <option value="Nueva urbanización">Nueva urbanización</option>
+            <option value="Pérdida de vegetación">Pérdida de vegetación</option>
+            <option value="Ganancia de vegetación">Ganancia de vegetación</option>
+          </select>
+        </div>
+        <div class="tabla-scroll"><table id="tabla-zonas">
+          <caption class="chico">Zonas de cambio más grandes (mayores a <span id="min-ha"></span> ha). “Ver punto aproximado” marca una referencia, no el contorno exacto; las hectáreas son estimadas.</caption>
+          <thead><tr><th scope="col">#</th><th scope="col">Tipo de cambio</th><th scope="col">Superficie estimada (ha)</th><th scope="col">Ubicación desde el centro</th><th scope="col">Antes tenía vegetación</th><th scope="col">Acción</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <h3 class="sub-h">Hacia dónde creció la ciudad</h3>
+        <p class="chico">Cada dirección indica el lado de la ciudad visto desde su centro (por ejemplo, “noreste” es hacia arriba y a la derecha del mapa).</p>
+        <canvas id="graf-dir" height="240" role="img" aria-label="Gráfico de barras de hectáreas por dirección"></canvas>
+        <details class="alt-tabla"><summary>Ver estos datos en una tabla</summary><div id="alt-dir"></div></details>
+        <div class="botonera">
+          <a class="btn btn-borde btn-chico" id="dl-csv" href="#">⬇ Descargar zonas (CSV)</a>
+          <a class="btn btn-borde btn-chico" id="dl-png" href="#" download="mapa_de_cambios.png">⬇ Descargar mapa de cambios (PNG)</a>
+        </div>
+      </div>
+      <p id="cambios-vacio" class="chico" hidden>Este registro no tiene detalle de zonas (es un registro de prueba).</p>
+    </div>
+
+    {# ---- Pestaña 3: Estadísticas ---- #}
+    <div role="tabpanel" id="panel-stats" aria-labelledby="tab-stats" tabindex="0" hidden>
+      <h3 class="sub-h">Cifras principales (estimadas)</h3>
+      <p class="chico">Para imaginar las superficies: 1 hectárea (ha) son 10.000 m², aproximadamente 1,4 canchas de fútbol.</p>
+      <div class="grid-datos" id="res-cifras"></div>
+      <div class="aviso aviso-info" role="note">
+        <strong>Área comparable:</strong> <span id="calidad-analisis"></span>
+      </div>
+      <h3 class="sub-h">Indicadores</h3>
+      <div class="grid-datos" id="res-indicadores"></div>
+      <div class="grillas-2">
+        <div><h3 class="sub-h">Superficie en hectáreas</h3>
+          <canvas id="graf-ha" height="220" role="img" aria-label="Gráfico de barras de hectáreas"></canvas>
+          <details class="alt-tabla"><summary>Ver estos datos en una tabla</summary><div id="alt-ha"></div></details></div>
+        <div id="caja-anillos"><h3 class="sub-h">Vegetación según la distancia al centro</h3>
+          <canvas id="graf-anillos" height="220" role="img" aria-label="Gráfico de barras del porcentaje de vegetación por anillo"></canvas>
+          <details class="alt-tabla"><summary>Ver estos datos en una tabla</summary><div id="alt-anillos"></div></details></div>
+      </div>
+    </div>
+
+    {# ---- Pestaña 4: Informe ---- #}
+    <div role="tabpanel" id="panel-informe" aria-labelledby="tab-informe" tabindex="0" hidden>
+      <div id="bloque-informe">
+        <h3 class="sub-h">Informe técnico <span class="insignia" id="ins-ia"></span></h3>
+        <button type="button" class="btn btn-borde btn-chico" id="btn-leer-informe" hidden aria-pressed="false">🔊 Escuchar informe</button>
+        <h4>Diagnóstico de crecimiento</h4><p id="txt-diagnostico" class="pre"></p>
+        <h4>Impacto ambiental y territorial</h4><p id="txt-impacto" class="pre"></p>
+        <h4>Recomendaciones para el municipio</h4><p id="txt-recomendaciones" class="pre"></p>
+        <h4>Limitaciones</h4><p id="txt-limitaciones" class="pre"></p>
+      </div>
+    </div>
+
+    {# ---- Pestaña 5: Fuentes ---- #}
+    <div role="tabpanel" id="panel-fuentes" aria-labelledby="tab-fuentes" tabindex="0" hidden>
+      <h3 class="sub-h">Fuente de los datos</h3>
+      <div class="tabla-scroll"><table id="res-escenas">
+        <caption class="chico">Imágenes satelitales utilizadas</caption>
+        <thead><tr><th scope="col">Imagen</th><th scope="col">Satélite</th><th scope="col">Fecha</th><th scope="col">Nubes</th><th scope="col">Tile (ubicación)</th><th scope="col">Fuente</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="chico">Más detalles del método en <a href="{{ url_for('acerca') }}">Fuentes y límites</a>.</p>
+    </div>
+  </div>
+  <p id="anuncio" class="sr-only" role="status" aria-live="polite"></p>
+</section>
