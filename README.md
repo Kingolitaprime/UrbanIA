@@ -46,12 +46,14 @@ templates/ static/   frontend (HTML5, CSS3, JavaScript: visor.js, accesibilidad.
 ```
 
 ## Despliegue (Render + base remota)
-1. Subir a GitHub (sin `.env`).
-2. Base de datos: MySQL en Aiven o PostgreSQL en Supabase. Copiar la URL de conexión.
-3. Render → New Web Service → repositorio. Build: `pip install -r requirements.txt && python init_db.py`.
-   Start: `gunicorn app:app --workers 1 --threads 4 --timeout 180`.
-4. Variables de entorno: `SECRET_KEY`, `DATABASE_URL`, `GEMINI_API_KEY`, `COOKIE_SECURE=1`, y las `*_PASSWORD`.
-5. Render asigna `https://<nombre>.onrender.com` (subdominio público). Opcional: dominio propio en *Settings → Custom Domains*.
+La aplicación Flask no se puede alojar en GitHub Pages; GitHub guarda el código y Render ejecuta el servidor.
+
+1. Confirma los cambios en GitHub y crea una base de datos PostgreSQL en Supabase u otro proveedor. Copia su URL de conexión.
+2. Abre [desplegar UrbanIA en Render](https://render.com/deploy?repo=https://github.com/Kingolitaprime/UrbanIA) e inicia sesión en Render.
+3. En el formulario de despliegue, proporciona `DATABASE_URL` y contraseñas propias para `ADMIN_PASSWORD`, `PLANIFICADOR_PASSWORD` y `CONSULTOR_PASSWORD`. Render genera `SECRET_KEY` automáticamente. No reutilices las contraseñas de prueba.
+4. Render construye la aplicación, inicializa la base de datos y publica una URL `https://urbania.onrender.com` (o el nombre que elijas). Esa URL es el enlace público para compartir. El primer inicio puede tardar unos minutos.
+
+La base de datos debe ser PostgreSQL y estar disponible desde Render. `GEMINI_API_KEY` es opcional; sin ella se utiliza el modo de informe alternativo. El plan gratuito de Render puede suspender el servicio cuando no recibe tráfico; al volver a abrirlo, el inicio puede demorar.
 
 ## Aviso
 Las superficies son **estimaciones** por teledetección (umbrales de índices espectrales), no mediciones confirmadas.
