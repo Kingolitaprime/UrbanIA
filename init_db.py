@@ -77,6 +77,13 @@ def semilla():
         db.session.commit()
 
     if not Usuario.query.first():
+        if os.getenv("RENDER", "").lower() == "true":
+            requeridas = ("ADMIN_PASSWORD", "PLANIFICADOR_PASSWORD", "CONSULTOR_PASSWORD")
+            faltantes = [nombre for nombre in requeridas if not os.getenv(nombre)]
+            if faltantes:
+                raise RuntimeError(
+                    "Configure contraseñas iniciales seguras en Render: " + ", ".join(faltantes)
+                )
         roles = {r.nombre: r.id for r in Rol.query.all()}
         usuarios = [
             ("Administrador UrbanIA", "admin@urbania.local", "ADMIN_PASSWORD", "Admin1234!", "Administrador"),

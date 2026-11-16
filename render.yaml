@@ -7,6 +7,8 @@ services:
     startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 180
     healthCheckPath: /login
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
@@ -19,3 +21,8 @@ services:
         sync: false
       - key: CONSULTOR_PASSWORD
         sync: false
+      # Opcional: sin esta clave, UrbanIA genera informes mediante reglas.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
